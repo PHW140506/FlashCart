@@ -1,0 +1,25 @@
+cat << 'EOF' > .gitignore
+# .NET / C#
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+
+# Capacitor / Android
+frontend/MobileFrontend/android/app/build/
+frontend/MobileFrontend/android/.gradle/
+frontend/MobileFrontend/android/local.properties
+frontend/MobileFrontend/android/.idea/
+
+# Sistema y Editores
+.DS_Store
+Thumbs.db
+.vscode/
+EOF
