@@ -1,5 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   AuthFlowError,
@@ -11,14 +12,17 @@ import {
 } from '../models/auth.models';
 import { ConnectivityService } from './connectivity.service';
 import { SecureSessionStorageService } from './secure-session-storage.service';
+import { CartService } from './cart.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly connectivity = inject(ConnectivityService);
   private readonly storage = inject(SecureSessionStorageService);
+  private readonly cartService = inject(CartService);
 
   private readonly apiUrl = 'https://fakestoreapi.com';
 
@@ -118,6 +122,18 @@ export class AuthService {
     } finally {
       this.sessionWasRestored = true;
     }
+  }
+
+  /**
+   * Cierre de sesión (US02):
+   * Limpia almacenamiento, vacía carrito en memoria y redirige a /login.
+   */
+  async logout(): Promise<void> {
+    await this.storage.clear();
+    this.sessionSignal.set(null);
+    this.sessionWasRestored = true;
+    this.cartService.clearCart();
+    this.router.navigate(['/login'], { replaceUrl: true });
   }
 
   routeForRole(role: UserRole): string {

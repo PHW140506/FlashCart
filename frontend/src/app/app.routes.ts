@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { CatalogComponent } from './features/catalog/catalog.component';
 
 export const routes: Routes = [
   {
@@ -14,6 +15,12 @@ export const routes: Routes = [
       import('./features/auth/login/login.component').then(
         (module) => module.LoginComponent,
       ),
+  },
+  {
+    path: 'catalogo',
+    canActivate: [authGuard],
+    component: CatalogComponent,
+    title: 'FlashCart - Catálogo de Productos'
   },
   {
     path: 'admin',
@@ -31,15 +38,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/home/auditor-home.component').then(
         (module) => module.AuditorHomeComponent,
-      ),
-  },
-  {
-    path: 'catalogo',
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['Cliente'] },
-    loadComponent: () =>
-      import('./features/home/client-home.component').then(
-        (module) => module.ClientHomeComponent,
       ),
   },
   {
