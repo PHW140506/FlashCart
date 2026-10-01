@@ -1,0 +1,27 @@
+<div class="category-filters" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+  <button
+    [style.font-weight]="selectedCategory === null ? 'bold' : 'normal'"
+    (click)="selectCategory(null)">
+    Ver todos
+  </button>
+
+  <button
+    *ngFor="let cat of categories"
+    [style.font-weight]="selectedCategory === cat ? 'bold' : 'normal'"
+    (click)="selectCategory(cat)">
+    {{ cat }}
+  </button>
+</div>
+
+<div *ngIf="isLoading" style="text-align: center; padding: 20px;">
+  <p>Cargando productos...</p>
+</div>
+
+<div *ngIf="!isLoading" style="display: flex; flex-wrap: wrap; gap: 20px;">
+  <div *ngFor="let product of products" style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; width: 200px; background-color: #f9f9f9; text-align: center;">
+    <img [src]="product.image" [alt]="product.title" style="width: 80px; height: 80px; margin: 0 auto 10px auto; display: block; object-fit: contain;">
+    <h4 style="color: #333; margin: 5px 0;">{{ product.title }}</h4>
+    <p style="color: #555; font-size: 14px;">{{ product.description }}</p>
+    <p style="color: #000;"><strong>${{ product.price }}</strong></p>
+  </div>
+</div>
