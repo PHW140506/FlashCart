@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlashCart.API/FlashCart.API.csproj" />
+    <Project Path="src/FlashCart.Application/FlashCart.Application.csproj" />
+    <Project Path="src/FlashCart.Domain/FlashCart.Domain.csproj" />
+    <Project Path="src/FlashCart.Infrastructure/FlashCart.Infrastructure.csproj" />
+  </Folder>
+</Solution>
