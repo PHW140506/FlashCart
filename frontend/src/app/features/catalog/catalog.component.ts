@@ -3,6 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Product } from '../../core/models/product.model';
 import { ProductService } from '../../core/services/product.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-catalog',
@@ -13,6 +14,7 @@ import { ProductService } from '../../core/services/product.service';
 export class CatalogComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly destroyRef = inject(DestroyRef);
+  public readonly authService = inject(AuthService);
 
   readonly products = signal<Product[]>([]);
   readonly loading = signal<boolean>(true);
@@ -51,5 +53,9 @@ export class CatalogComponent implements OnInit {
     if (target && target.src !== this.fallbackImage) {
       target.src = this.fallbackImage;
     }
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 }

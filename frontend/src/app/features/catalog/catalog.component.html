@@ -1,4 +1,23 @@
 <section class="catalog-container" aria-label="Catálogo de productos">
+  <!-- Barra de navegación con Cierre de Sesión -->
+  <nav style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+    <div style="font-weight: 700; font-size: 1.2rem; color: #1e293b;">
+      FlashCart <span style="font-size: 0.85rem; color: #2563eb; font-weight: 500;">(Cliente)</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <span style="font-size: 0.9rem; color: #475569;">
+        Hola, <strong>{{ authService.currentSession()?.user?.username || 'Cliente' }}</strong>
+      </span>
+      <button 
+        type="button" 
+        (click)="logout()" 
+        style="background: #ef4444; color: #ffffff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.875rem;">
+        Cerrar sesión
+      </button>
+    </div>
+  </nav>
+
   <header class="catalog-header">
     <div class="header-content">
       <h1 class="catalog-title">Catálogo General de Productos</h1>
