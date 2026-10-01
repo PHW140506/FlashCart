@@ -2,14 +2,17 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = async (_route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isAuthenticated()) {
+  const session = await authService.restoreSession();
+
+  if (session) {
     return true;
   }
 
-  // Redirige al login bloqueando el acceso a vistas protegidas
-  return router.parseUrl('/login');
+  return router.createUrlTree(['/login'], {
+    queryParams: { returnUrl: state.url },
+  });
 };
