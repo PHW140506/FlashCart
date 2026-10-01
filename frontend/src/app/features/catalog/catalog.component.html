@@ -1,0 +1,82 @@
+<section class="catalog-container" aria-label="Catálogo de productos">
+  <header class="catalog-header">
+    <div class="header-content">
+      <h1 class="catalog-title">Catálogo General de Productos</h1>
+      <p class="catalog-subtitle">Explora nuestra selección completa de artículos disponibles</p>
+    </div>
+  </header>
+
+  <!-- Estado: Cargando (Skeletons) -->
+  @if (loading()) {
+    <div class="catalog-grid" aria-busy="true" aria-label="Cargando productos">
+      @for (item of skeletonCount; track $index) {
+        <div class="skeleton-card" aria-hidden="true">
+          <div class="skeleton-image"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line skeleton-badge"></div>
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-title short"></div>
+            <div class="skeleton-line skeleton-price"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Estado: Error con botón de reintento -->
+  @else if (error()) {
+    <div class="error-container" role="alert">
+      <div class="error-icon" aria-hidden="true">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h2 class="error-title">Hubo un problema</h2>
+      <p class="error-message">{{ error() }}</p>
+      <button type="button" class="retry-button" (click)="loadProducts()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="retry-icon">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <!-- Estado: Catálogo cargado con éxito -->
+  @else {
+    <div class="catalog-grid">
+      @for (product of products(); track product.id) {
+        <article class="product-card">
+          <div class="product-image-container">
+            <img
+              [src]="product.image"
+              [alt]="product.title"
+              loading="lazy"
+              (error)="onImageError($event)"
+              class="product-image"
+            />
+          </div>
+
+          <div class="product-details">
+            <span class="product-category">{{ product.category }}</span>
+            <h2 class="product-title" [title]="product.title">{{ product.title }}</h2>
+
+            <div class="product-footer">
+              <span class="product-price">${{ product.price | number:'1.2-2' }}</span>
+              @if (product.rating) {
+                <span class="product-rating" [attr.aria-label]="'Calificación: ' + product.rating.rate + ' de 5'">
+                  <span class="star-icon">★</span>
+                  <span class="rating-rate">{{ product.rating.rate }}</span>
+                  <span class="rating-count">({{ product.rating.count }})</span>
+                </span>
+              }
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
