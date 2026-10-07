@@ -1,6 +1,6 @@
-namespace FlashCart.Domain.Entities;
+namespace FlashCart.Application.DTOs;
 
-public class Product
+public class ProductDto
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
