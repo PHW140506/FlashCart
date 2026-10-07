@@ -12,6 +12,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddSingleton<IProductRepository, InMemoryProductRepository>();
+        services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         return services;
     }
 }

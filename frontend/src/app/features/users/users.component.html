@@ -1,0 +1,63 @@
+<section class="users-container" style="padding: 2rem; max-width: 1200px; margin: 0 auto; font-family: system-ui, sans-serif;">
+  <header style="margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem;">
+    <h1 style="font-size: 1.8rem; font-weight: 700; color: #0f172a; margin: 0;">Directorio de Cuentas Registradas</h1>
+    <p style="color: #64748b; margin-top: 0.5rem;">Módulo de auditoría y control de perfiles (Solo Administrador / Auditor)</p>
+  </header>
+
+  <!-- Escenario 3: Indicador visual de carga -->
+  @if (loading()) {
+    <div style="padding: 2.5rem; text-align: center; background: #f8fafc; border-radius: 8px;">
+      <p style="color: #2563eb; font-weight: 600; font-size: 1.1rem; margin: 0;">Cargando directorio desde la API local en .NET...</p>
+    </div>
+  }
+
+  <!-- Escenario 3: Alerta de interrupción y reintento -->
+  @else if (errorMessage()) {
+    <div style="background: #fef2f2; border: 1px solid #f87171; color: #991b1b; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+      <p style="font-weight: 600; margin: 0 0 0.75rem 0;">{{ errorMessage() }}</p>
+      <button (click)="fetchUsers()" style="background: #dc2626; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer;">
+        Reintentar Conexión
+      </button>
+    </div>
+  }
+
+  <!-- Escenario 1: Lista interactiva y estructurada de usuarios -->
+  @else {
+    <div style="overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+        <thead>
+          <tr style="background: #f1f5f9; color: #334155; border-bottom: 1px solid #cbd5e1;">
+            <th style="padding: 1rem;">ID</th>
+            <th style="padding: 1rem;">Nombre Completo</th>
+            <th style="padding: 1rem;">Usuario</th>
+            <th style="padding: 1rem;">Correo Electrónico</th>
+            <th style="padding: 1rem;">Teléfono</th>
+            <th style="padding: 1rem;">Rol</th>
+            <th style="padding: 1rem;">Ubicación</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+              <td style="padding: 1rem; font-weight: 600; color: #64748b;">#{{ user.id }}</td>
+              <td style="padding: 1rem; font-weight: 600; color: #0f172a;">{{ user.fullName }}</td>
+              <td style="padding: 1rem; color: #3b82f6;">{{ user.username }}</td>
+              <td style="padding: 1rem; color: #475569;">{{ user.email }}</td>
+              <td style="padding: 1rem; color: #475569;">{{ user.phone }}</td>
+              <td style="padding: 1rem;">
+                <span [style.background]="user.role === 'Administrador' ? '#dbeafe' : (user.role === 'Auditor' ? '#fef3c7' : '#f1f5f9')"
+                      [style.color]="user.role === 'Administrador' ? '#1e40af' : (user.role === 'Auditor' ? '#92400e' : '#475569')"
+                      style="padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600;">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td style="padding: 1rem; color: #64748b; font-size: 0.85rem;">
+                {{ user.address.city }}, {{ user.address.street }} #{{ user.address.number }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
