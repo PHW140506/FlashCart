@@ -3,8 +3,15 @@ using FlashCart.Domain.Interfaces;
 
 namespace FlashCart.Infrastructure.Persistence;
 
-public class InMemoryProductRepository : IProductRepository
+/// <summary>
+/// Repositorio singleton y local. Se sincroniza para evitar colisiones de IDs,
+/// lecturas inconsistentes y modificaciones concurrentes de la lista.
+/// Los datos de prueba se reinician al detener el proceso.
+/// </summary>
+public sealed class InMemoryProductRepository : IProductRepository
 {
+    private readonly object _sync = new();
+    private int _nextId = 5;
     private readonly List<Product> _products = new()
     {
         new Product
@@ -45,14 +52,76 @@ public class InMemoryProductRepository : IProductRepository
         }
     };
 
-    public Task<IEnumerable<Product>> GetAllAsync() => 
-        Task.FromResult<IEnumerable<Product>>(_products);
+    public Task<IEnumerable<Product>> GetAllAsync()
+    {
+        lock (_sync)
+            return Task.FromResult<IEnumerable<Product>>(_products.Select(Copy).ToArray());
+    }
 
-    public Task<Product?> GetByIdAsync(int id) => 
-        Task.FromResult(_products.FirstOrDefault(p => p.Id == id));
+    public Task<Product?> GetByIdAsync(int id)
+    {
+        lock (_sync)
+            return Task.FromResult(_products.Where(p => p.Id == id).Select(Copy).FirstOrDefault());
+    }
 
-    public Task<IEnumerable<Product>> GetByCategoryAsync(string category) => 
-        Task.FromResult(_products.Where(p => p.Category.Equals(category, StringComparison.OrdinalIgnoreCase)));
-    public Task<IEnumerable<string>> GetCategoriesAsync() =>
-        Task.FromResult(_products.Select(p => p.Category).Distinct(StringComparer.OrdinalIgnoreCase));
+    public Task<IEnumerable<Product>> GetByCategoryAsync(string category)
+    {
+        lock (_sync)
+            return Task.FromResult<IEnumerable<Product>>(_products
+                .Where(p => p.Category.Equals(category, StringComparison.OrdinalIgnoreCase))
+                .Select(Copy).ToArray());
+    }
+
+    public Task<IEnumerable<string>> GetCategoriesAsync()
+    {
+        lock (_sync)
+            return Task.FromResult<IEnumerable<string>>(_products
+                .Select(p => p.Category).Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
+    }
+
+    public Task<Product> CreateAsync(Product product)
+    {
+        lock (_sync)
+        {
+            var stored = Copy(product);
+            stored.Id = _nextId++;
+            _products.Add(stored);
+            return Task.FromResult(Copy(stored));
+        }
+    }
+
+    public Task<Product?> UpdateAsync(Product product)
+    {
+        lock (_sync)
+        {
+            var index = _products.FindIndex(p => p.Id == product.Id);
+            if (index < 0) return Task.FromResult<Product?>(null);
+
+            // Las valoraciones no forman parte del formulario de inventario.
+            var existing = _products[index];
+            var updated = Copy(product);
+            updated.RatingRate = existing.RatingRate;
+            updated.RatingCount = existing.RatingCount;
+            _products[index] = updated;
+            return Task.FromResult<Product?>(Copy(updated));
+        }
+    }
+
+    public Task<bool> DeleteAsync(int id)
+    {
+        lock (_sync)
+        {
+            var index = _products.FindIndex(p => p.Id == id);
+            if (index < 0) return Task.FromResult(false);
+            _products.RemoveAt(index);
+            return Task.FromResult(true);
+        }
+    }
+
+    private static Product Copy(Product p) => new()
+    {
+        Id = p.Id, Title = p.Title, Price = p.Price,
+        Description = p.Description, Category = p.Category,
+        Image = p.Image, RatingRate = p.RatingRate, RatingCount = p.RatingCount
+    };
 }
