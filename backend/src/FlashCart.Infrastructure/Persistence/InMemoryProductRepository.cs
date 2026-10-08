@@ -55,4 +55,20 @@ public class InMemoryProductRepository : IProductRepository
         Task.FromResult(_products.Where(p => p.Category.Equals(category, StringComparison.OrdinalIgnoreCase)));
     public Task<IEnumerable<string>> GetCategoriesAsync() =>
         Task.FromResult(_products.Select(p => p.Category).Distinct(StringComparer.OrdinalIgnoreCase));
+    public Task<Product?> UpdateAsync(Product product)
+{
+    var existing = _products.FirstOrDefault(p => p.Id == product.Id);
+    if (existing is null)
+    {
+        return Task.FromResult<Product?>(null);
+    }
+
+    existing.Title = product.Title;
+    existing.Price = product.Price;
+    existing.Description = product.Description;
+    existing.Category = product.Category;
+    existing.Image = product.Image;
+
+    return Task.FromResult<Product?>(existing);
+}
 }

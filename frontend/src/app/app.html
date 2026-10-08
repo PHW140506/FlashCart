@@ -1,36 +1,63 @@
 <div class="app-layout">
-  <!-- La barra es común a Admin, Auditor, Cliente y demás pantallas protegidas. -->
   @if (session(); as current) {
-    <header class="app-navbar">
+    <header class="app-navbar" role="banner">
       <div class="navbar-container">
+        <!-- Logo / Marca -->
         <div class="brand">
           <span class="brand-name">FlashCart</span>
         </div>
 
+        <!-- Menú de Navegación por Perfiles -->
+        <nav class="nav-links" aria-label="Navegación principal">
+          <a routerLink="/catalogo" routerLinkActive="active" class="nav-item">Catálogo</a>
+
+          @if (current.role === 'Administrador') {
+            <a routerLink="/admin" routerLinkActive="active" class="nav-item">Panel Admin</a>
+            <a routerLink="/usuarios" routerLinkActive="active" class="nav-item">Usuarios</a>
+          }
+
+          @if (current.role === 'Administrador' || current.role === 'Auditor') {
+            <a routerLink="/carritos" routerLinkActive="active" class="nav-item">Carritos</a>
+          }
+
+          @if (current.role === 'Auditor') {
+            <a routerLink="/auditor" routerLinkActive="active" class="nav-item">Panel Auditor</a>
+          }
+        </nav>
+
+        <!-- Datos de Sesión y Cierre -->
         <div class="session-tools">
-          <span class="session-profile">
-            <strong>{{ current.user.fullName }}</strong>
-            <small>{{ current.role }}</small>
-          </span>
+          <div class="session-profile">
+            <span class="profile-name">{{ current.user.fullName }}</span>
+            <span class="profile-role">{{ current.role }}</span>
+          </div>
+
           <button
             type="button"
             class="logout-button"
             [disabled]="closingSession()"
             (click)="logout()"
+            aria-label="Cerrar sesión activa"
           >
-            {{ closingSession() ? 'Cerrando sesión...' : 'Cerrar sesión' }}
+            @if (closingSession()) {
+              <span>Cerrando...</span>
+            } @else {
+              <span>Cerrar sesión</span>
+            }
           </button>
         </div>
       </div>
     </header>
 
     @if (logoutError()) {
-      <p class="session-error" role="alert">{{ logoutError() }}</p>
+      <div class="session-error" role="alert">
+        {{ logoutError() }}
+      </div>
     }
   }
 
-  <!-- Las vistas siguen dentro del router-outlet, sin duplicar componentes. -->
-  <main class="app-main">
+  <!-- Vistas secundarias gestionadas por el Router -->
+  <main class="app-main" role="main">
     <router-outlet />
   </main>
 </div>

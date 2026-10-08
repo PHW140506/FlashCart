@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using FlashCart.Application.Products.Queries;
+using FlashCart.Application.Products.Commands;
 using FlashCart.Domain.Entities;
 
 namespace FlashCart.API.Controllers;
@@ -46,5 +47,28 @@ public class ProductsController : ControllerBase
             return NotFound(new { message = $"Producto con ID #{id} no encontrado." });
         }
         return Ok(product);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<Product>> Update(int id, [FromBody] UpdateProductCommand command)
+    {
+        if (id != command.Id)
+        {
+            return BadRequest(new { message = "El ID de la ruta no coincide con el producto a modificar." });
+        }
+
+        try
+        {
+            var updated = await _mediator.Send(command);
+            if (updated is null)
+            {
+                return NotFound(new { message = $"Producto con ID #{id} no encontrado." });
+            }
+            return Ok(updated);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

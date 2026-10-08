@@ -11,126 +11,139 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 
   .navbar-container {
     max-width: 1280px;
     margin: 0 auto;
-    padding: 0.875rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 1.5rem;
   }
 
   .brand {
     display: flex;
     align-items: center;
-    gap: 0.625rem;
-    color: #4f46e5;
+
+    .brand-name {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #1e293b;
+      letter-spacing: -0.025em;
+    }
   }
 
-  .brand-icon {
-    stroke: #4f46e5;
-    fill: #4f46e5;
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-grow: 1;
+
+    .nav-item {
+      text-decoration: none;
+      color: #64748b;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.5rem 0.85rem;
+      border-radius: 6px;
+      transition: all 0.15s ease-in-out;
+
+      &:hover {
+        color: #2563eb;
+        background-color: #eff6ff;
+      }
+
+      &.active {
+        color: #2563eb;
+        font-weight: 600;
+        background-color: #eff6ff;
+      }
+    }
   }
 
-  .brand-name {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: #0f172a;
-    letter-spacing: -0.025em;
+  .session-tools {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+
+    .session-profile {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      line-height: 1.25;
+
+      .profile-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1e293b;
+      }
+
+      .profile-role {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #64748b;
+      }
+    }
+
+    .logout-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ef4444;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+
+      &:hover:not(:disabled) {
+        background-color: #dc2626;
+      }
+
+      &:focus-visible {
+        outline: 2px solid #f87171;
+        outline-offset: 2px;
+      }
+
+      &:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+    }
   }
 }
 
 .app-main {
   flex-grow: 1;
-}
-
-.app-footer {
-  background-color: #ffffff;
-  border-top: 1px solid #e2e8f0;
   padding: 1.5rem;
-  text-align: center;
-  margin-top: auto;
-
-  .footer-container p {
-    margin: 0;
-    font-size: 0.875rem;
-    color: #64748b;
-  }
-}
-
-/* US02: menú compartido, accesible y adaptable a pantallas pequeñas. */
-.session-tools {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.session-profile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  color: #334155;
-  font-size: 0.875rem;
-
-  small {
-    color: #64748b;
-    font-size: 0.75rem;
-  }
-}
-
-.logout-button {
-  background: #dc2626;
-  color: #ffffff;
-  border: 0;
-  border-radius: 8px;
-  padding: 0.65rem 1rem;
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 650;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: #b91c1c;
-  }
-
-  &:focus-visible {
-    outline: 3px solid #fca5a5;
-    outline-offset: 3px;
-  }
-
-  &:disabled {
-    opacity: 0.65;
-    cursor: wait;
-  }
 }
 
 .session-error {
-  max-width: 1150px;
-  width: calc(100% - 2rem);
+  max-width: 1280px;
   margin: 0.75rem auto;
   padding: 0.75rem 1rem;
-  border: 1px solid #fca5a5;
-  border-radius: 8px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background-color: #fef2f2;
   color: #991b1b;
-  background: #fef2f2;
+  font-size: 0.875rem;
 }
 
-@media (max-width: 620px) {
+@media (max-width: 768px) {
   .app-navbar .navbar-container {
-    padding: 0.75rem 1rem;
     flex-wrap: wrap;
+    padding: 0.75rem 1rem;
   }
 
-  .session-tools {
+  .nav-links {
+    order: 3;
     width: 100%;
-    justify-content: space-between;
-    gap: 0.75rem;
-  }
-
-  .session-profile {
-    align-items: flex-start;
+    overflow-x: auto;
+    padding-top: 0.5rem;
   }
 }
