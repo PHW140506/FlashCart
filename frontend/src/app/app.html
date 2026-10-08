@@ -1,4 +1,35 @@
 <div class="app-layout">
+  <!-- La barra es común a Admin, Auditor, Cliente y demás pantallas protegidas. -->
+  @if (session(); as current) {
+    <header class="app-navbar">
+      <div class="navbar-container">
+        <div class="brand">
+          <span class="brand-name">FlashCart</span>
+        </div>
+
+        <div class="session-tools">
+          <span class="session-profile">
+            <strong>{{ current.user.fullName }}</strong>
+            <small>{{ current.role }}</small>
+          </span>
+          <button
+            type="button"
+            class="logout-button"
+            [disabled]="closingSession()"
+            (click)="logout()"
+          >
+            {{ closingSession() ? 'Cerrando sesión...' : 'Cerrar sesión' }}
+          </button>
+        </div>
+      </div>
+    </header>
+
+    @if (logoutError()) {
+      <p class="session-error" role="alert">{{ logoutError() }}</p>
+    }
+  }
+
+  <!-- Las vistas siguen dentro del router-outlet, sin duplicar componentes. -->
   <main class="app-main">
     <router-outlet />
   </main>
