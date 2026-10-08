@@ -12,22 +12,14 @@ import {
 } from '../models/auth.models';
 import { ConnectivityService } from './connectivity.service';
 import { SecureSessionStorageService } from './secure-session-storage.service';
-import { CartService } from './cart.service';
 
-/**
- * Core: servicio global (singleton) encargado de la sesión.
- * Angular NO comprueba contraseñas: solo las envía al backend .NET.
- * API Controller -> MediatR -> Handler -> repositorio: allí vive la lógica del negocio.
- */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly connectivity = inject(ConnectivityService);
   private readonly storage = inject(SecureSessionStorageService);
-  private readonly cartService = inject(CartService);
 
-  // Se reutiliza la misma dirección base del backend local
   private readonly loginUrl = `${API_CONFIG.baseUrl}/auth/login`;
   private readonly validateUrl = `${API_CONFIG.baseUrl}/auth/validate`;
 
@@ -39,14 +31,12 @@ export class AuthService {
   readonly currentRole = computed(() => this.sessionSignal()?.role ?? null);
 
   async login(credentials: LoginCredentials): Promise<UserSession> {
-    // Criterio US01: avisar sobre falta de conexión ANTES de llamar a la API.
     if (!(await this.connectivity.isConnected())) {
       throw new AuthFlowError('NO_CONNECTION', 'No tienes conexión de red.');
     }
 
     let response: LoginResponse;
     try {
-      // La respuesta la genera nuestro backend local; NO utilizamos proveedores HTTP externos.
       response = await firstValueFrom(
         this.http.post<LoginResponse>(this.loginUrl, credentials),
       );
@@ -62,28 +52,22 @@ export class AuthService {
       throw new AuthFlowError('UNKNOWN', 'No se pudo iniciar sesión. Intenta nuevamente.');
     }
 
-    // No confiamos en una respuesta vacía o con un usuario incompleto.
     if (!response?.token || !response.user || !Number.isInteger(response.user.id) || response.user.id <= 0) {
       throw new AuthFlowError('INVALID_TOKEN', 'El servidor devolvió una sesión inválida.');
     }
-    if (this.tokenExpired(response.token)) {
+
+    if (this.isTokenExpired(response.token)) {
       throw new AuthFlowError('INVALID_TOKEN', 'El servidor devolvió un token vencido o inválido.');
     }
 
-    // Regla de US01: los IDs 1 y 2 son Admin, el 3 Auditor y los demás Cliente.
-    const expectedRole = this.mapRole(response.user.id);
-    if (response.user.role !== expectedRole) {
-      throw new AuthFlowError('INVALID_TOKEN', 'El perfil devuelto por la API no coincide con el usuario.');
-    }
-
+    // El rol viene legitimado directamente por la API del backend, sin hardcodear IDs
     const session: UserSession = {
       token: response.token,
-      role: expectedRole,
+      role: response.user.role,
       user: response.user,
     };
 
     try {
-      // Almacenamiento seguro de sesión
       await this.storage.save(session);
     } catch {
       throw new AuthFlowError('STORAGE_ERROR', 'No fue posible guardar la sesión en este dispositivo.');
@@ -95,10 +79,9 @@ export class AuthService {
   }
 
   async restoreSession(): Promise<UserSession | null> {
-    // Las vistas y Guards comparten esta misma instancia del servicio.
     const inMemory = this.sessionSignal();
     if (this.sessionWasRestored) {
-      if (inMemory && !this.tokenExpired(inMemory.token)) {
+      if (inMemory && !this.isTokenExpired(inMemory.token)) {
         return inMemory;
       }
       if (inMemory) {
@@ -115,17 +98,72 @@ export class AuthService {
       return null;
     }
 
-    if (!saved) {
-      this.sessionSignal.set(null);
-      this.sessionWasRestored = true;
-      return null;
-    }
-
-    // Comprobación local de forma/expiración: NO sustituye la firma del JWT.
-    if (!this.validSavedSession(saved) || this.tokenExpired(saved.token)) {
+    if (!saved || !this.isValidSession(saved) || this.isTokenExpired(saved.token)) {
       await this.discardSession();
       return null;
     }
 
     try {
-      // Al reabrir
+      await firstValueFrom(
+        this.http.get<void>(this.validateUrl, {
+          headers: new HttpHeaders({ Authorization: `Bearer ${saved.token}` }),
+        }),
+      );
+      this.sessionSignal.set(saved);
+      this.sessionWasRestored = true;
+      return saved;
+    } catch (error) {
+      this.sessionSignal.set(null);
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        await this.discardSession();
+      }
+      return null;
+    }
+  }
+
+  // Desacoplado: ya no manipula el CartService directamente (Principio de Inversión de Dependencias)
+  async logout(): Promise<void> {
+    await this.discardSession();
+    await this.router.navigate(['/login'], { replaceUrl: true });
+  }
+
+  routeForRole(role: UserRole): string {
+    switch (role) {
+      case 'Administrador': return '/admin';
+      case 'Auditor': return '/auditor';
+      default: return '/catalogo';
+    }
+  }
+
+  private isValidSession(session: UserSession): boolean {
+    return Boolean(
+      session &&
+      typeof session.token === 'string' &&
+      session.user &&
+      Number.isInteger(session.user.id) &&
+      session.user.id > 0 &&
+      session.role === session.user.role,
+    );
+  }
+
+  private isTokenExpired(token: string): boolean {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return typeof payload.exp !== 'number' || payload.exp <= Math.floor(Date.now() / 1000);
+    } catch {
+      return true;
+    }
+  }
+
+  private async discardSession(): Promise<void> {
+    this.sessionSignal.set(null);
+    this.sessionWasRestored = true;
+    try {
+      await this.storage.clear();
+    } catch {
+      // Ignorar fallo de almacenamiento si la sesión en memoria ya se limpió
+    }
+  }
+}
