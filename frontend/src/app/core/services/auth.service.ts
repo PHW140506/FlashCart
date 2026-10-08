@@ -1,3 +1,4 @@
+import { API_CONFIG } from '../config/api.config';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
@@ -24,7 +25,7 @@ export class AuthService {
   private readonly storage = inject(SecureSessionStorageService);
   private readonly cartService = inject(CartService);
 
-  private readonly apiUrl = 'https://fakestoreapi.com';
+  private readonly apiUrl = API_CONFIG.baseUrl;
 
   private readonly sessionSignal = signal<UserSession | null>(null);
   private sessionWasRestored = false;
@@ -85,7 +86,7 @@ export class AuthService {
 
     try {
       user = await firstValueFrom(
-        this.http.get<FakeStoreUser>(`${this.apiUrl}/users/${userId}`),
+        this.http.get<FakeStoreUser>(`${this.apiUrl}${API_CONFIG.endpoints.users}/${userId}`),
       );
     } catch {
       throw new AuthFlowError(
@@ -124,10 +125,6 @@ export class AuthService {
     }
   }
 
-  /**
-   * Cierre de sesión (US02):
-   * Limpia almacenamiento, vacía carrito en memoria y redirige a /login.
-   */
   async logout(): Promise<void> {
     await this.storage.clear();
     this.sessionSignal.set(null);

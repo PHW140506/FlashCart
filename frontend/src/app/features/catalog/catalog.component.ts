@@ -1,5 +1,6 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProductService } from '../../core/services/product.service';
 import { Product } from '../../core/models/product.model';
@@ -7,7 +8,7 @@ import { Product } from '../../core/models/product.model';
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe],
+  imports: [CommonModule, CurrencyPipe, RouterLink],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.scss'
 })
