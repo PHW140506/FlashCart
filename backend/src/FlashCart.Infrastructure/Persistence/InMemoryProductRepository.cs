@@ -53,4 +53,6 @@ public class InMemoryProductRepository : IProductRepository
 
     public Task<IEnumerable<Product>> GetByCategoryAsync(string category) => 
         Task.FromResult(_products.Where(p => p.Category.Equals(category, StringComparison.OrdinalIgnoreCase)));
+    public Task<IEnumerable<string>> GetCategoriesAsync() =>
+        Task.FromResult(_products.Select(p => p.Category).Distinct(StringComparer.OrdinalIgnoreCase));
 }

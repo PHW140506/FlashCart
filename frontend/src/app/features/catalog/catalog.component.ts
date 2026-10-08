@@ -16,18 +16,43 @@ export class CatalogComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly products = signal<Product[]>([]);
+  readonly categories = signal<string[]>([]);
+  readonly selectedCategory = signal<string | null>(null);
   readonly loading = signal<boolean>(true);
   readonly errorMessage = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.fetchCatalog();
+    this.loadCategories();
+    this.fetchProducts();
   }
 
-  fetchCatalog(): void {
+  loadCategories(): void {
+    this.productService.getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => this.categories.set(data),
+        error: (err) => console.error('Error al cargar categorías:', err)
+      });
+  }
+
+  selectCategory(category: string | null): void {
+    if (this.selectedCategory() === category) return;
+    this.selectedCategory.set(category);
+    this.fetchProducts();
+  }
+
+  fetchProducts(): void {
+    // Gestión de memoria preventiva exigida en la US04:
+    this.products.set([]);
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.productService.getProducts()
+    const activeCat = this.selectedCategory();
+    const request$ = activeCat 
+      ? this.productService.getProductsByCategory(activeCat)
+      : this.productService.getProducts();
+
+    request$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data) => {
@@ -35,8 +60,8 @@ export class CatalogComponent implements OnInit {
           this.loading.set(false);
         },
         error: (err) => {
-          console.error('Error al descargar catálogo:', err);
-          this.errorMessage.set('No fue posible cargar el catálogo de productos desde el servidor local.');
+          console.error('Error al cargar productos:', err);
+          this.errorMessage.set('No se pudieron obtener los productos para esta selección.');
           this.loading.set(false);
         }
       });
