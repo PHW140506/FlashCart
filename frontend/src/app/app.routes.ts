@@ -20,6 +20,14 @@ export const routes: Routes = [
     title: 'FlashCart - Catálogo de Productos',
   },
   {
+    path: 'usuarios',
+    loadComponent: () =>
+      import('./features/users/users.component').then(
+        (m) => m.UsersComponent
+      ),
+    title: 'FlashCart - Control de Usuarios',
+  },
+  {
     path: 'admin',
     loadComponent: () =>
       import('./features/home/admin-home.component').then(

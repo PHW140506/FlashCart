@@ -1,6 +1,7 @@
 export const API_CONFIG = {
   baseUrl: 'http://localhost:5178/api',
   endpoints: {
-    products: '/products'
+    products: '/products',
+    users: '/users'
   }
 } as const;
