@@ -13,6 +13,7 @@ public static class DependencyInjection
     {
         services.AddSingleton<IProductRepository, InMemoryProductRepository>();
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+        services.AddSingleton<ICartRepository, InMemoryCartRepository>();
         return services;
     }
 }
