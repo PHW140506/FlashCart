@@ -20,6 +20,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
   }
 
   .brand {
@@ -57,5 +58,79 @@
     margin: 0;
     font-size: 0.875rem;
     color: #64748b;
+  }
+}
+
+/* US02: menú compartido, accesible y adaptable a pantallas pequeñas. */
+.session-tools {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.session-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: #334155;
+  font-size: 0.875rem;
+
+  small {
+    color: #64748b;
+    font-size: 0.75rem;
+  }
+}
+
+.logout-button {
+  background: #dc2626;
+  color: #ffffff;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 650;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #b91c1c;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #fca5a5;
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: wait;
+  }
+}
+
+.session-error {
+  max-width: 1150px;
+  width: calc(100% - 2rem);
+  margin: 0.75rem auto;
+  padding: 0.75rem 1rem;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  color: #991b1b;
+  background: #fef2f2;
+}
+
+@media (max-width: 620px) {
+  .app-navbar .navbar-container {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .session-tools {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .session-profile {
+    align-items: flex-start;
   }
 }
