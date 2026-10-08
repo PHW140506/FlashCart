@@ -20,6 +20,14 @@ export const routes: Routes = [
     title: 'FlashCart - Catálogo de Productos',
   },
   {
+    path: 'catalogo/:id',
+    loadComponent: () =>
+      import('./features/product-detail/product-detail.component').then(
+        (m) => m.ProductDetailComponent
+      ),
+    title: 'FlashCart - Detalle de Producto',
+  },
+  {
     path: 'usuarios',
     loadComponent: () =>
       import('./features/users/users.component').then(
