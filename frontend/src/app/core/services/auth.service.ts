@@ -1,11 +1,10 @@
-import { API_CONFIG } from '../config/api.config';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { API_CONFIG } from '../config/api.config';
 import {
   AuthFlowError,
-  FakeStoreUser,
   LoginCredentials,
   LoginResponse,
   UserRole,
@@ -13,19 +12,16 @@ import {
 } from '../models/auth.models';
 import { ConnectivityService } from './connectivity.service';
 import { SecureSessionStorageService } from './secure-session-storage.service';
-import { CartService } from './cart.service';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly connectivity = inject(ConnectivityService);
   private readonly storage = inject(SecureSessionStorageService);
-  private readonly cartService = inject(CartService);
 
-  private readonly apiUrl = API_CONFIG.baseUrl;
+  private readonly loginUrl = `${API_CONFIG.baseUrl}/auth/login`;
+  private readonly validateUrl = `${API_CONFIG.baseUrl}/auth/validate`;
 
   private readonly sessionSignal = signal<UserSession | null>(null);
   private sessionWasRestored = false;
@@ -35,152 +31,139 @@ export class AuthService {
   readonly currentRole = computed(() => this.sessionSignal()?.role ?? null);
 
   async login(credentials: LoginCredentials): Promise<UserSession> {
-    const connected = await this.connectivity.isConnected();
-
-    if (!connected) {
-      throw new AuthFlowError(
-        'NO_CONNECTION',
-        'Sin conexión a internet.',
-      );
+    if (!(await this.connectivity.isConnected())) {
+      throw new AuthFlowError('NO_CONNECTION', 'No tienes conexión de red.');
     }
 
     let response: LoginResponse;
-
     try {
       response = await firstValueFrom(
-        this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, credentials),
+        this.http.post<LoginResponse>(this.loginUrl, credentials),
       );
     } catch (error) {
       if (error instanceof HttpErrorResponse) {
         if (error.status === 0) {
-          throw new AuthFlowError(
-            'NO_CONNECTION',
-            'No fue posible establecer conexión con el servicio.',
-          );
+          throw new AuthFlowError('NO_CONNECTION', 'No fue posible conectarse con el servidor local.');
         }
-
         if (error.status === 400 || error.status === 401) {
-          throw new AuthFlowError(
-            'INVALID_CREDENTIALS',
-            'Usuario o contraseña inválidos',
-          );
+          throw new AuthFlowError('INVALID_CREDENTIALS', 'Usuario o contraseña inválidos');
         }
       }
-
-      throw new AuthFlowError(
-        'UNKNOWN',
-        'Ocurrió un error al iniciar sesión.',
-      );
+      throw new AuthFlowError('UNKNOWN', 'No se pudo iniciar sesión. Intenta nuevamente.');
     }
 
-    if (!response?.token) {
-      throw new AuthFlowError(
-        'INVALID_TOKEN',
-        'La API no devolvió un token válido.',
-      );
+    if (!response?.token || !response.user || !Number.isInteger(response.user.id) || response.user.id <= 0) {
+      throw new AuthFlowError('INVALID_TOKEN', 'El servidor devolvió una sesión inválida.');
     }
 
-    const userId = this.getUserIdFromToken(response.token);
-
-    let user: FakeStoreUser;
-
-    try {
-      user = await firstValueFrom(
-        this.http.get<FakeStoreUser>(`${this.apiUrl}${API_CONFIG.endpoints.users}/${userId}`),
-      );
-    } catch {
-      throw new AuthFlowError(
-        'USER_INFO_ERROR',
-        'No fue posible descargar la información del usuario.',
-      );
+    if (this.isTokenExpired(response.token)) {
+      throw new AuthFlowError('INVALID_TOKEN', 'El servidor devolvió un token vencido o inválido.');
     }
 
+    // El rol viene legitimado directamente por la API del backend, sin hardcodear IDs
     const session: UserSession = {
       token: response.token,
-      role: this.mapRole(user.id),
-      user,
+      role: response.user.role,
+      user: response.user,
     };
 
-    await this.storage.save(session);
+    try {
+      await this.storage.save(session);
+    } catch {
+      throw new AuthFlowError('STORAGE_ERROR', 'No fue posible guardar la sesión en este dispositivo.');
+    }
+
     this.sessionSignal.set(session);
     this.sessionWasRestored = true;
-
     return session;
   }
 
   async restoreSession(): Promise<UserSession | null> {
+    const inMemory = this.sessionSignal();
     if (this.sessionWasRestored) {
-      return this.sessionSignal();
+      if (inMemory && !this.isTokenExpired(inMemory.token)) {
+        return inMemory;
+      }
+      if (inMemory) {
+        await this.discardSession();
+      }
+      return null;
     }
 
+    let saved: UserSession | null;
     try {
-      const storedSession = await this.storage.read();
-      this.sessionSignal.set(storedSession);
-      return storedSession;
+      saved = await this.storage.read();
     } catch {
       this.sessionSignal.set(null);
       return null;
-    } finally {
+    }
+
+    if (!saved || !this.isValidSession(saved) || this.isTokenExpired(saved.token)) {
+      await this.discardSession();
+      return null;
+    }
+
+    try {
+      await firstValueFrom(
+        this.http.get<void>(this.validateUrl, {
+          headers: new HttpHeaders({ Authorization: `Bearer ${saved.token}` }),
+        }),
+      );
+      this.sessionSignal.set(saved);
       this.sessionWasRestored = true;
+      return saved;
+    } catch (error) {
+      this.sessionSignal.set(null);
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        await this.discardSession();
+      }
+      return null;
     }
   }
 
+  // Desacoplado: ya no manipula el CartService directamente (Principio de Inversión de Dependencias)
   async logout(): Promise<void> {
-    await this.storage.clear();
-    this.sessionSignal.set(null);
-    this.sessionWasRestored = true;
-    this.cartService.clearCart();
-    this.router.navigate(['/login'], { replaceUrl: true });
+    await this.discardSession();
+    await this.router.navigate(['/login'], { replaceUrl: true });
   }
 
   routeForRole(role: UserRole): string {
     switch (role) {
-      case 'Administrador':
-        return '/admin';
-      case 'Auditor':
-        return '/auditor';
-      default:
-        return '/catalogo';
+      case 'Administrador': return '/admin';
+      case 'Auditor': return '/auditor';
+      default: return '/catalogo';
     }
   }
 
-  private mapRole(userId: number): UserRole {
-    if (userId === 1 || userId === 2) {
-      return 'Administrador';
-    }
-
-    if (userId === 3) {
-      return 'Auditor';
-    }
-
-    return 'Cliente';
+  private isValidSession(session: UserSession): boolean {
+    return Boolean(
+      session &&
+      typeof session.token === 'string' &&
+      session.user &&
+      Number.isInteger(session.user.id) &&
+      session.user.id > 0 &&
+      session.role === session.user.role,
+    );
   }
 
-  private getUserIdFromToken(token: string): number {
+  private isTokenExpired(token: string): boolean {
     try {
-      const tokenParts = token.split('.');
-
-      if (tokenParts.length < 2) {
-        throw new Error('Token incompleto');
-      }
-
-      const base64Url = tokenParts[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
-      const payload = JSON.parse(atob(padded)) as { sub?: string | number };
-
-      const userId = Number(payload.sub);
-
-      if (!Number.isInteger(userId) || userId <= 0) {
-        throw new Error('ID inválido');
-      }
-
-      return userId;
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return typeof payload.exp !== 'number' || payload.exp <= Math.floor(Date.now() / 1000);
     } catch {
-      throw new AuthFlowError(
-        'INVALID_TOKEN',
-        'No fue posible identificar al usuario desde el token.',
-      );
+      return true;
+    }
+  }
+
+  private async discardSession(): Promise<void> {
+    this.sessionSignal.set(null);
+    this.sessionWasRestored = true;
+    try {
+      await this.storage.clear();
+    } catch {
+      // Ignorar fallo de almacenamiento si la sesión en memoria ya se limpió
     }
   }
 }
