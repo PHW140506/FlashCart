@@ -27,7 +27,7 @@ export class AuthService {
   private readonly storage = inject(SecureSessionStorageService);
   private readonly cartService = inject(CartService);
 
-  // Se reutiliza la misma dirección que ya usa el catálogo y los usuarios.
+  // Se reutiliza la misma dirección base del backend local
   private readonly loginUrl = `${API_CONFIG.baseUrl}/auth/login`;
   private readonly validateUrl = `${API_CONFIG.baseUrl}/auth/validate`;
 
@@ -83,7 +83,7 @@ export class AuthService {
     };
 
     try {
-      // El servicio existente utiliza almacenamiento seguro de Capacitor en móvil.
+      // Almacenamiento seguro de sesión
       await this.storage.save(session);
     } catch {
       throw new AuthFlowError('STORAGE_ERROR', 'No fue posible guardar la sesión en este dispositivo.');
@@ -128,84 +128,4 @@ export class AuthService {
     }
 
     try {
-      // Al reabrir la aplicación, .NET valida firma y vigencia del token.
-      await firstValueFrom(
-        this.http.get<void>(this.validateUrl, {
-          headers: new HttpHeaders({ Authorization: `Bearer ${saved.token}` }),
-        }),
-      );
-      this.sessionSignal.set(saved);
-      this.sessionWasRestored = true;
-      return saved;
-    } catch (error) {
-      this.sessionSignal.set(null);
-      if (error instanceof HttpErrorResponse && error.status === 401) {
-        await this.discardSession(); // El servidor ya no acepta este token.
-      }
-      // Si la API está apagada no borramos la sesión guardada: podremos reintentar.
-      return null;
-    }
-  }
-
-  /**
-   * US02 reutiliza este método: borra almacenamiento, sesión y carrito.
-   * replaceUrl evita dejar la pantalla anterior como destino inmediato del navegador.
-   * La protección real de rutas también depende de los Guards y del backend.
-   */
-  async logout(): Promise<void> {
-    await this.storage.clear();
-    this.sessionSignal.set(null);
-    this.sessionWasRestored = true;
-    this.cartService.clearCart();
-    await this.router.navigate(['/login'], { replaceUrl: true });
-  }
-
-  routeForRole(role: UserRole): string {
-    switch (role) {
-      case 'Administrador': return '/admin';
-      case 'Auditor': return '/auditor';
-      default: return '/catalogo';
-    }
-  }
-
-  private mapRole(id: number): UserRole {
-    if (id === 1 || id === 2) return 'Administrador';
-    if (id === 3) return 'Auditor';
-    return 'Cliente';
-  }
-
-  private validSavedSession(session: UserSession): boolean {
-    return Boolean(
-      session &&
-      typeof session.token === 'string' &&
-      session.user &&
-      Number.isInteger(session.user.id) &&
-      session.user.id > 0 &&
-      session.role === this.mapRole(session.user.id) &&
-      session.user.role === session.role,
-    );
-  }
-
-  private tokenExpired(token: string): boolean {
-    try {
-      const pieces = token.split('.');
-      if (pieces.length !== 3) return true;
-      const payloadPart = pieces[1].replace(/-/g, '+').replace(/_/g, '/');
-      const padded = payloadPart.padEnd(Math.ceil(payloadPart.length / 4) * 4, '=');
-      const payload = JSON.parse(atob(padded)) as { exp?: unknown };
-      return typeof payload.exp !== 'number' || payload.exp <= Math.floor(Date.now() / 1000);
-    } catch {
-      return true;
-    }
-  }
-
-  private async discardSession(): Promise<void> {
-    this.sessionSignal.set(null);
-    this.sessionWasRestored = true;
-    try {
-      await this.storage.clear();
-    } catch {
-      // La sesión queda invalidada en memoria incluso si falla el almacenamiento.
-    }
-  }
-}
+      // Al reabrir

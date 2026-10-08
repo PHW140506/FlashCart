@@ -1,0 +1,61 @@
+<section style="padding: 2.5rem 1.5rem; max-width: 1000px; margin: 0 auto; font-family: system-ui, sans-serif;">
+  <div style="margin-bottom: 1.5rem;">
+    <a routerLink="/catalogo" style="color: #2563eb; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.95rem;">
+      ← Volver al Catálogo
+    </a>
+  </div>
+
+  @if (loading()) {
+    <div style="padding: 4rem 2rem; text-align: center; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
+      <div style="display: inline-block; width: 42px; height: 42px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <p style="color: #2563eb; font-weight: 600; font-size: 1.1rem; margin-top: 1rem;">Cargando información del producto...</p>
+    </div>
+  }
+  @else if (notFoundMessage()) {
+    <!-- Escenario 3: Manejo de error de consulta y aviso de retorno automático -->
+    <div style="background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; padding: 2rem; border-radius: 12px; text-align: center;">
+      <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">{{ notFoundMessage() }}</h3>
+      <p style="margin: 0; font-size: 0.95rem; color: #c2410c;">Si no eres redirigido de forma automática, pulsa el enlace superior.</p>
+    </div>
+  }
+  @else if (product(); as item) {
+    <!-- Escenario 1: Visualización estándar (imagen, título, precio, descripción, categoría) -->
+    <article style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem;">
+      <div style="background: #f8fafc; border-radius: 10px; display: flex; align-items: center; justify-content: center; min-height: 350px; padding: 1.5rem;">
+        <img [src]="item.image" [alt]="item.title" style="max-height: 320px; max-width: 100%; object-fit: contain;" />
+      </div>
+
+      <div style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; font-weight: 700; background: #f1f5f9; padding: 0.3rem 0.7rem; border-radius: 9999px;">
+            {{ item.category }}
+          </span>
+          <h1 style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 1rem 0 0.75rem 0; line-height: 1.25;">
+            {{ item.title }}
+          </h1>
+          <p style="font-size: 1.75rem; font-weight: 800; color: #16a34a; margin: 0 0 1.25rem 0;">
+            {{ item.price | currency:'USD' }}
+          </p>
+          <div style="border-top: 1px solid #f1f5f9; padding-top: 1rem; margin-top: 0.5rem;">
+            <h4 style="color: #334155; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">Descripción completa:</h4>
+            <p style="color: #64748b; line-height: 1.6; font-size: 0.95rem; margin: 0;">
+              {{ item.description }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Escenario 2: Interfaz de gestión habilitada exclusivamente para Administrador -->
+        @if (isAdmin()) {
+          <div style="border-top: 1px solid #e2e8f0; padding-top: 1.5rem; margin-top: 1.5rem; display: flex; gap: 1rem;">
+            <button (click)="onEdit()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s;">
+              Editar Producto
+            </button>
+            <button (click)="onDelete()" style="flex: 1; background: #dc2626; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s;">
+              Eliminar Producto
+            </button>
+          </div>
+        }
+      </div>
+    </article>
+  }
+</section>
