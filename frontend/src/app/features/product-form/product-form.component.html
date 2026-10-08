@@ -1,0 +1,58 @@
+<section class="inventory-form">
+  <a routerLink="/catalogo" class="back">← Volver al catálogo</a>
+  <h1>{{ productId() === null ? 'Registrar producto' : 'Editar producto #' + productId() }}</h1>
+  <p>Gestión de inventario · Acceso exclusivo de Administrador</p>
+
+  @if (loading()) {
+    <p role="status">Cargando producto...</p>
+  } @else {
+    @if (errorMessage()) {
+      <p class="message error" role="alert">{{ errorMessage() }}</p>
+    }
+    @if (createdId(); as id) {
+      <p class="message success" role="status">
+        Producto registrado correctamente (ID #{{ id }}). El formulario quedó limpio.
+        <a [routerLink]="['/catalogo', id]">Ver producto</a>
+      </p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <label for="product-title">Título *</label>
+      <input id="product-title" type="text" formControlName="title" maxlength="150" />
+      @if (form.controls.title.touched && form.controls.title.invalid) {
+        <small class="field-error">Ingresa un título (máximo 150 caracteres).</small>
+      }
+
+      <label for="product-price">Precio *</label>
+      <input id="product-price" type="number" min="0.01" step="0.01" formControlName="price" />
+      @if (form.controls.price.touched && form.controls.price.invalid) {
+        <small class="field-error">El precio debe ser mayor que cero.</small>
+      }
+
+      <label for="product-description">Descripción *</label>
+      <textarea id="product-description" formControlName="description" maxlength="2000" rows="4"></textarea>
+      @if (form.controls.description.touched && form.controls.description.invalid) {
+        <small class="field-error">La descripción es obligatoria.</small>
+      }
+
+      <label for="product-category">Categoría *</label>
+      <input id="product-category" type="text" formControlName="category" maxlength="100" />
+      @if (form.controls.category.touched && form.controls.category.invalid) {
+        <small class="field-error">La categoría es obligatoria.</small>
+      }
+
+      <label for="product-image">URL de imagen *</label>
+      <input id="product-image" type="url" formControlName="image" maxlength="2048" placeholder="https://..." />
+      @if (form.controls.image.touched && form.controls.image.invalid) {
+        <small class="field-error">Usa una dirección HTTP o HTTPS válida.</small>
+      }
+
+      <div class="actions">
+        <button type="submit" [disabled]="saving() || loading() || (productId() !== null && form.pristine)">
+          {{ saving() ? 'Guardando...' : (productId() === null ? 'Registrar producto' : 'Guardar cambios') }}
+        </button>
+        <a routerLink="/catalogo" class="cancel">Cancelar</a>
+      </div>
+    </form>
+  }
+</section>

@@ -4,7 +4,6 @@ import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { guestGuard } from './core/guards/guest.guard';
 
-// Core/Guards protege la navegación. .NET debe proteger además sus endpoints.
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
@@ -23,10 +22,27 @@ export const routes: Routes = [
   {
     path: 'catalogo/:id',
     loadComponent: () =>
-      import('./features/product-detail/product-detail.component').then(
-        (m) => m.ProductDetailComponent
-      ),
+      import('./features/product-detail/product-detail.component').then(m => m.ProductDetailComponent),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Cliente', 'Administrador', 'Auditor'] },
     title: 'FlashCart - Detalle de Producto',
+  },
+  // Épica 3: UI restringida a Administrador; .NET vuelve a validar el JWT/rol.
+  {
+    path: 'productos/nuevo',
+    loadComponent: () =>
+      import('./features/product-form/product-form.component').then(m => m.ProductFormComponent),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Administrador'] },
+    title: 'FlashCart - Registrar Producto',
+  },
+  {
+    path: 'productos/:id/editar',
+    loadComponent: () =>
+      import('./features/product-form/product-form.component').then(m => m.ProductFormComponent),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Administrador'] },
+    title: 'FlashCart - Editar Producto',
   },
   {
     path: 'usuarios',
