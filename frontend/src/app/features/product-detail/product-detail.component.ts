@@ -144,4 +144,41 @@ export class ProductDetailComponent implements OnInit {
       alert(`Producto #${this.product()?.id} marcado para eliminación`);
     }
   }
+  // Estados para eliminación
+  readonly isDeleting = signal<boolean>(false);
+  readonly deleteError = signal<string | null>(null);
+
+  openDeleteModal(): void {
+    this.deleteError.set(null);
+    this.isDeleting.set(true);
+  }
+
+  cancelDelete(): void {
+    if (this.saving()) return;
+    this.isDeleting.set(false);
+    this.deleteError.set(null);
+  }
+
+  confirmDelete(): void {
+    const current = this.product();
+    if (!current || this.saving()) return;
+
+    this.saving.set(true);
+    this.deleteError.set(null);
+
+    this.productService.deleteProduct(current.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.isDeleting.set(false);
+          // Redirección inmediata al catálogo tras la eliminación real en la API
+          this.router.navigate(['/catalogo']);
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.deleteError.set(err?.error?.message || 'Error al intentar eliminar el producto.');
+        }
+      });
+  }
 }

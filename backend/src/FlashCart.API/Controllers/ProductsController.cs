@@ -71,4 +71,22 @@ public class ProductsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            var result = await _mediator.Send(new DeleteProductCommand(id));
+            if (!result)
+            {
+                return NotFound(new { message = $"No se encontró el producto con ID #{id} para eliminar." });
+            }
+
+            return NoContent(); // 204 No Content estándar para eliminaciones exitosas
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

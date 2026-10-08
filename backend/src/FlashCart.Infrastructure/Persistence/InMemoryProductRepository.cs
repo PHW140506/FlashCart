@@ -56,7 +56,7 @@ public class InMemoryProductRepository : IProductRepository
     public Task<IEnumerable<string>> GetCategoriesAsync() =>
         Task.FromResult(_products.Select(p => p.Category).Distinct(StringComparer.OrdinalIgnoreCase));
     public Task<Product?> UpdateAsync(Product product)
-{
+    {
     var existing = _products.FirstOrDefault(p => p.Id == product.Id);
     if (existing is null)
     {
@@ -70,5 +70,16 @@ public class InMemoryProductRepository : IProductRepository
     existing.Image = product.Image;
 
     return Task.FromResult<Product?>(existing);
+    }
+    public Task<bool> DeleteAsync(int id)
+{
+    var product = _products.FirstOrDefault(p => p.Id == id);
+    if (product is null)
+    {
+        return Task.FromResult(false);
+    }
+
+    _products.Remove(product);
+    return Task.FromResult(true);
 }
 }

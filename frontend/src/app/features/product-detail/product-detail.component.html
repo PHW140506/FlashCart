@@ -41,7 +41,7 @@
             <button type="button" class="btn btn-primary" (click)="openEditModal()">
               Editar Producto
             </button>
-            <button type="button" class="btn btn-danger" (click)="onDelete()">
+            <button type="button" class="btn btn-danger" (click)="openDeleteModal()">
               Eliminar Producto
             </button>
           </footer>
@@ -102,6 +102,38 @@
             </button>
           </div>
         </form>
+      </section>
+    </div>
+  }
+
+  <!-- Modal de Confirmación de Eliminación -->
+  @if (isDeleting()) {
+    <div class="modal-backdrop" (click)="cancelDelete()">
+      <section class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <header class="modal-header">
+          <h2>Confirmar Eliminación</h2>
+          <button type="button" class="btn-close" (click)="cancelDelete()">&times;</button>
+        </header>
+
+        @if (deleteError()) {
+          <div class="modal-error" role="alert">
+            {{ deleteError() }}
+          </div>
+        }
+
+        <p style="color: #475569; margin: 1rem 0;">
+          ¿Estás seguro de que deseas eliminar permanentemente el producto 
+          <strong>"{{ product()?.title }}"</strong>? Esta acción no se puede deshacer.
+        </p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="cancelDelete()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-danger" [disabled]="saving()" (click)="confirmDelete()">
+            {{ saving() ? 'Eliminando...' : 'Sí, Eliminar' }}
+          </button>
+        </div>
       </section>
     </div>
   }
