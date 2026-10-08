@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MobileBackend.Api/MobileBackend.Api.csproj" />
+  <Project Path="MobileBackend.Application/MobileBackend.Application.csproj" />
+  <Project Path="MobileBackend.Domain/MobileBackend.Domain.csproj" />
+</Solution>

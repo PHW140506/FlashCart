@@ -1,29 +1,25 @@
 cat << 'EOF' > .gitignore
-# .NET
+# .NET / C#
 bin/
 obj/
 *.user
 *.suo
 .vs/
-*.db
-*.db-shm
-*.db-wal
 
-# Angular & Node
+# Node / Angular
 node_modules/
 dist/
 .angular/
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# IDEs y SO
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.idea/
+# Capacitor / Android
+frontend/MobileFrontend/android/app/build/
+frontend/MobileFrontend/android/.gradle/
+frontend/MobileFrontend/android/local.properties
+frontend/MobileFrontend/android/.idea/
+
+# Sistema y Editores
 .DS_Store
 Thumbs.db
+.vscode/
 EOF
