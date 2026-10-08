@@ -8,17 +8,12 @@ import { AuthService } from '../../core/services/auth.service';
     <main class="page">
       <section class="card">
         <p class="role">Auditor</p>
-        <h1>Bienvenido, {{ authService.currentSession()?.user?.name?.firstname }}</h1>
+        <!-- Backend .NET devuelve fullName, no name.firstname. -->
+        <h1>Bienvenido, {{ authService.currentSession()?.user?.fullName }}</h1>
         <p>Esta vista representa la interfaz destinada al perfil Auditor.</p>
         <dl>
-          <div>
-            <dt>Usuario</dt>
-            <dd>{{ authService.currentSession()?.user?.username }}</dd>
-          </div>
-          <div>
-            <dt>Rol</dt>
-            <dd>{{ authService.currentSession()?.role }}</dd>
-          </div>
+          <div><dt>Usuario</dt><dd>{{ authService.currentSession()?.user?.username }}</dd></div>
+          <div><dt>Rol</dt><dd>{{ authService.currentSession()?.role }}</dd></div>
         </dl>
       </section>
     </main>

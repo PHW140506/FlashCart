@@ -2,23 +2,18 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
-  selector: 'app-client-home',
+  selector: 'app-cliente-home',
   standalone: true,
   template: `
     <main class="page">
       <section class="card">
         <p class="role">Cliente</p>
-        <h1>Bienvenido, {{ authService.currentSession()?.user?.name?.firstname }}</h1>
+        <!-- Backend .NET devuelve fullName, no name.firstname. -->
+        <h1>Bienvenido, {{ authService.currentSession()?.user?.fullName }}</h1>
         <p>Esta vista representa la interfaz destinada al perfil Cliente.</p>
         <dl>
-          <div>
-            <dt>Usuario</dt>
-            <dd>{{ authService.currentSession()?.user?.username }}</dd>
-          </div>
-          <div>
-            <dt>Rol</dt>
-            <dd>{{ authService.currentSession()?.role }}</dd>
-          </div>
+          <div><dt>Usuario</dt><dd>{{ authService.currentSession()?.user?.username }}</dd></div>
+          <div><dt>Rol</dt><dd>{{ authService.currentSession()?.role }}</dd></div>
         </dl>
       </section>
     </main>

@@ -1,43 +1,35 @@
-export type UserRole = 'Administrador' | 'Auditor' | 'Cliente';
+import type { User } from './user.model';
+
+// Modelo compartido entre Core (servicios/guards) y Features (pantallas).
+// User coincide con el UserDto que devuelve nuestro backend .NET.
+export type UserRole = User['role'];
 
 export interface LoginCredentials {
   username: string;
   password: string;
 }
 
+// POST /api/auth/login devuelve un token y la información del usuario.
 export interface LoginResponse {
   token: string;
-}
-
-export interface FakeStoreUser {
-  id: number;
-  email: string;
-  username: string;
-  name: {
-    firstname: string;
-    lastname: string;
-  };
-  phone: string;
+  user: User;
 }
 
 export interface UserSession {
   token: string;
   role: UserRole;
-  user: FakeStoreUser;
+  user: User;
 }
 
 export type AuthErrorCode =
   | 'NO_CONNECTION'
   | 'INVALID_CREDENTIALS'
   | 'INVALID_TOKEN'
-  | 'USER_INFO_ERROR'
+  | 'STORAGE_ERROR'
   | 'UNKNOWN';
 
 export class AuthFlowError extends Error {
-  constructor(
-    public readonly code: AuthErrorCode,
-    message: string,
-  ) {
+  constructor(public readonly code: AuthErrorCode, message: string) {
     super(message);
     this.name = 'AuthFlowError';
   }
